@@ -5,6 +5,8 @@ import (
 	"log/slog"
 	"os"
 	"url-shortener/internal/config"
+	"url-shortener/internal/logger/sl"
+	"url-shortener/internal/storage/sqlite"
 )
 
 func main() {
@@ -13,12 +15,17 @@ func main() {
 
 	cfg := config.MustLoad()
 
-	// ! сделать свой логгер
+	// TODO: сделать свой логгер
 	log := setupLogger(cfg.Env)
 	log.Info("Starting App", slog.String("env", cfg.Env))
 	log.Debug("Debug level is enable")
 
-	// TODO: storage: mongodb
+	// TODO: заменить sqlite на mongodb
+	storage, err := sqlite.New(cfg.StoragePath)
+	if err != nil {
+		log.Error("Failed to connect to storage", sl.Error(err))
+		os.Exit(1) // можно заменить на return
+	}
 
 	// TODO: router: chi, chi render
 
