@@ -5,6 +5,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"log/slog"
+	"net/http"
 	"os"
 	"url-shortener/internal/config"
 	"url-shortener/internal/http-server/handlers/url/save"
@@ -43,7 +44,20 @@ func main() {
 	router.Post("/url", save.New(log, storage))
 
 	log.Info("Starting server", slog.String("address", cfg.HTTPServer.Address))
-	// TODO: server
+
+	server := &http.Server{
+		Addr:         cfg.HTTPServer.Address,
+		Handler:      router,
+		ReadTimeout:  cfg.HTTPServer.Timeout,
+		WriteTimeout: cfg.HTTPServer.Timeout,
+		IdleTimeout:  cfg.HTTPServer.Timeout,
+	}
+
+	if err := server.ListenAndServe(); err != nil {
+		log.Error("Failed to start server", sl.Error(err))
+		os.Exit(1) // можно заменить на return
+	}
+	log.Info("Server stopped")
 }
 
 func setupLogger(env string) (log *slog.Logger) {
