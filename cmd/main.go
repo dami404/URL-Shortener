@@ -2,10 +2,13 @@ package main
 
 import (
 	"github.com/common-nighthawk/go-figure"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"log/slog"
 	"os"
 	"url-shortener/internal/config"
-	"url-shortener/internal/logger/sl"
+	"url-shortener/internal/http-server/handlers/url/save"
+	"url-shortener/internal/lib/logger/sl"
 	"url-shortener/internal/storage/sqlite"
 )
 
@@ -27,9 +30,20 @@ func main() {
 		os.Exit(1) // можно заменить на return
 	}
 
-	// TODO: router: chi, chi render
+	router := chi.NewRouter()
+	router.Use(middleware.RequestID)
 
-	// TODO: server:
+	// TODO: добавить в логи айпи адрес пользователя и чето с ним придумать интересное
+	//router.Use(middleware.RealIP)
+
+	router.Use(middleware.Logger)
+	router.Use(middleware.Recoverer)
+	router.Use(middleware.URLFormat)
+
+	router.Post("/url", save.New(log, storage))
+
+	log.Info("Starting server", slog.String("address", cfg.HTTPServer.Address))
+	// TODO: server
 }
 
 func setupLogger(env string) (log *slog.Logger) {

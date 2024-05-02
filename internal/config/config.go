@@ -26,6 +26,7 @@ func MustLoad() *Config {
 	}
 	configPath := os.Getenv("CONFIG_PATH")
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		// еще не инициализирован основной логгер, поэтому используем этот
 		log.Fatalf("config file does not exist: %s", configPath)
 	}
 

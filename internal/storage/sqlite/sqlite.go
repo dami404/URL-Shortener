@@ -40,27 +40,27 @@ func New(storagePath string) (*Storage, error) {
 	return &Storage{db: db}, nil
 }
 
-func (s *Storage) SaveUrl(urlToSave string, alias string) error {
+func (s *Storage) SaveURL(urlToSave string, alias string) (int64, error) {
 	const operation = "storage.sqlite.SaveUrl"
 
 	stmt, err := s.db.Prepare("INSERT INTO urls(url, alias) VALUES(?, ?)")
 	if err != nil {
-		return fmt.Errorf("%s: failed to prepare statement: %v", operation, err)
+		return 0, fmt.Errorf("%s: failed to prepare statement: %v", operation, err)
 	}
-	_, err = stmt.Exec(urlToSave, alias)
+	res, err := stmt.Exec(urlToSave, alias)
 	if err != nil {
 		// TODO: refactor this
 		if sqliteErr, ok := err.(sqlite3.Error); ok && sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
-			return storage.ErrAliasExists
+			return 0, storage.ErrAliasExists
 		}
-		return fmt.Errorf("%s: failed to execute statement: %v", operation, err)
+		return 0, fmt.Errorf("%s: failed to execute statement: %v", operation, err)
 	}
 
-	//id, err = res.LastInsertId()
-	//if err != nil {
-	//	return fmt.Errorf("%s: failed to get last insert id: %v", operation, err)
-	//}
-	return nil
+	id, err := res.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("%s: failed to get last insert id: %v", operation, err)
+	}
+	return id, nil
 
 }
 
